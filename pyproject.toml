@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "hier-config-cli"
+version = "0.1.0"
+description = ""
+authors = ["James Williams <james.williams@packetgeek.net>"]
+license = "Apache 2.0"
+readme = "README.md"
+packages = [{include = "hier_config_cli.py", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+hier-config = "^3.1.0"
+click = "^8.1.7"
+pyyaml = "^6.0.2"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.10.0"
+pytest = "^8.3.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+hier-config-cli = "hier_config_cli:cli"
