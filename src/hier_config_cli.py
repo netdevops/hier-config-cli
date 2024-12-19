@@ -1,5 +1,5 @@
 import click
-from hier_config import WorkflowRemediation, get_hconfig, Platform
+from hier_config import Platform, WorkflowRemediation, get_hconfig
 from hier_config.utils import read_text_from_file
 
 # Mapping for driver platforms
