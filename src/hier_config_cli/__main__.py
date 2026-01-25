@@ -4,12 +4,14 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Callable, Optional, TypeVar
 
 import click
 import yaml
 from hier_config import HConfig, Platform, WorkflowRemediation, get_hconfig
 from hier_config.utils import read_text_from_file
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 __version__ = "0.2.0"
 
@@ -198,7 +200,7 @@ def cli(ctx: click.Context, verbose: int) -> None:
     setup_logging(verbose)
 
 
-def common_options(func):
+def common_options(func: F) -> F:
     """Reusable options for platform, running config, and generated config."""
     func = click.option(
         "--platform",
