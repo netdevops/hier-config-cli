@@ -14,7 +14,6 @@ classifiers = [
     "Intended Audience :: System Administrators",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -26,8 +25,8 @@ packages = [{include = "hier_config_cli", from = "src"}]
 include = ["src/hier_config_cli/py.typed"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-hier-config = "^3.1.0"
+python = "^3.10"
+hier-config = "^3.3.0"
 click = "^8.1.7"
 pyyaml = "^6.0.2"
 
@@ -48,11 +47,11 @@ hier-config-cli = "hier_config_cli:cli"
 
 [tool.black]
 line-length = 100
-target-version = ["py39", "py310", "py311", "py312"]
+target-version = ["py310", "py311", "py312", "py313"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = [
@@ -67,7 +66,7 @@ select = [
 ignore = []
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_return_any = false
 warn_unused_configs = true
 disallow_untyped_defs = true

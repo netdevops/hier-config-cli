@@ -23,10 +23,10 @@ PLATFORM_MAP = {
     "eos": Platform.ARISTA_EOS,
     "junos": Platform.JUNIPER_JUNOS,
     "vyos": Platform.VYOS,
+    "fortios": Platform.FORTINET_FORTIOS,
     "generic": Platform.GENERIC,
     "hp_comware5": Platform.HP_COMWARE5,
     "hp_procurve": Platform.HP_PROCURVE,
-    "fortios": Platform.FORTINET_FORTIOS,
 }
 
 # Configure logging

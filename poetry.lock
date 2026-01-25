@@ -214,7 +214,7 @@ description = "Backport of PEP 654 (exception groups)"
 optional = false
 python-versions = ">=3.7"
 groups = ["dev"]
-markers = "python_version < \"3.11\""
+markers = "python_version == \"3.10\""
 files = [
     {file = "exceptiongroup-1.2.2-py3-none-any.whl", hash = "sha256:3111b9d131c238bec2f8f516e123e14ba243563fb135d3fe885990585aa7795b"},
     {file = "exceptiongroup-1.2.2.tar.gz", hash = "sha256:47c2edf7c6738fafb49fd34290706d1a1a2f4d1c6df275526b62cbb4aa5393cc"},
@@ -225,14 +225,14 @@ test = ["pytest (>=6)"]
 
 [[package]]
 name = "hier-config"
-version = "3.1.0"
+version = "3.4.0"
 description = "A network configuration query and comparison library, used to build remediation configurations."
 optional = false
-python-versions = "<4.0,>=3.9.0"
+python-versions = "<4.0,>=3.10.0"
 groups = ["main"]
 files = [
-    {file = "hier_config-3.1.0-py3-none-any.whl", hash = "sha256:3d547396b53b97b8d160aadf9a550a15663df085fefbb9bac4126fa62d6fbfc8"},
-    {file = "hier_config-3.1.0.tar.gz", hash = "sha256:857128118ee619544a3026aba339ebabd8472a6abc4da68e17a8938238b3352f"},
+    {file = "hier_config-3.4.0-py3-none-any.whl", hash = "sha256:c26f374fc28983ca665c78039a62fd31b77a4bd906c75b4d5b068a36612aa6b1"},
+    {file = "hier_config-3.4.0.tar.gz", hash = "sha256:27f58074dd43141c5ca7c5b8d095c9e54bb18ca63536fcf31a6bc2dcde24ec36"},
 ]
 
 [package.dependencies]
@@ -805,5 +805,5 @@ files = [
 
 [metadata]
 lock-version = "2.1"
-python-versions = "^3.9"
-content-hash = "1d0de6e928027bdb81d99305cbaad633ef5425fe9c42518595a0b2dff27e9c43"
+python-versions = "^3.10"
+content-hash = "75121bdb2b8a06217874d64b039b16d5dde10d61b59b70fa96029a0f38df9051"
