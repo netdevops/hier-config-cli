@@ -72,9 +72,7 @@ def get_output_text(hconfig: HConfig, platform: Platform) -> str:
     return "\n".join(lines)
 
 
-def format_output(
-    hconfig: HConfig, platform: Platform, output_format: str
-) -> str:
+def format_output(hconfig: HConfig, platform: Platform, output_format: str) -> str:
     """Format configuration output in the requested format.
 
     Args:
@@ -145,9 +143,7 @@ def process_configs(
         logger.info(f"Reading generated config from: {generated_config_path}")
         generated_config_text = read_text_from_file(generated_config_path)
     except FileNotFoundError:
-        raise click.ClickException(
-            f"Generated config file not found: {generated_config_path}"
-        )
+        raise click.ClickException(f"Generated config file not found: {generated_config_path}")
     except PermissionError:
         raise click.ClickException(
             f"Permission denied reading generated config: {generated_config_path}"
@@ -292,9 +288,7 @@ def rollback(
     Example:
         hier-config-cli rollback --platform ios --running-config running.conf --generated-config intended.conf
     """
-    result, platform_enum = process_configs(
-        platform, running_config, generated_config, "rollback"
-    )
+    result, platform_enum = process_configs(platform, running_config, generated_config, "rollback")
 
     try:
         output = format_output(result, platform_enum, output_format)
@@ -329,9 +323,7 @@ def future(
     Example:
         hier-config-cli future --platform ios --running-config running.conf --generated-config intended.conf
     """
-    result, platform_enum = process_configs(
-        platform, running_config, generated_config, "future"
-    )
+    result, platform_enum = process_configs(platform, running_config, generated_config, "future")
 
     try:
         output = format_output(result, platform_enum, output_format)

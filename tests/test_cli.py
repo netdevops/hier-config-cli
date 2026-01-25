@@ -22,7 +22,9 @@ def mock_running_config(tmp_path: Path) -> str:
         Path to the mock running config file
     """
     config_path = tmp_path / "running_config.conf"
-    config_path.write_text("hostname test-router\ninterface Vlan1\n ip address 10.0.0.1 255.255.255.0\n")
+    config_path.write_text(
+        "hostname test-router\ninterface Vlan1\n ip address 10.0.0.1 255.255.255.0\n"
+    )
     return str(config_path)
 
 
@@ -370,11 +372,20 @@ def test_very_verbose_logging(mock_running_config: str, mock_generated_config: s
 # Test all platforms
 @pytest.mark.parametrize(
     "platform",
-    ["ios", "nxos", "iosxr", "eos", "junos", "vyos", "fortios", "generic", "hp_comware5", "hp_procurve"],
+    [
+        "ios",
+        "nxos",
+        "iosxr",
+        "eos",
+        "junos",
+        "vyos",
+        "fortios",
+        "generic",
+        "hp_comware5",
+        "hp_procurve",
+    ],
 )
-def test_all_platforms(
-    platform: str, mock_running_config: str, mock_generated_config: str
-) -> None:
+def test_all_platforms(platform: str, mock_running_config: str, mock_generated_config: str) -> None:
     """Test remediation command works with all supported platforms."""
     runner = CliRunner()
     result = runner.invoke(
