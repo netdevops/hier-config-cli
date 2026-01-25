@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -16,21 +16,62 @@ jobs:
         - "3.10"
         - "3.11"
         - "3.12"
+        - "3.13"
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install poetry
       uses: snok/install-poetry@v1
       with:
-        version: 1.5.1
-    - name: Set PYTHONPATH
-      run: echo "PYTHONPATH=src" >> $GITHUB_ENV
-    - name: Run tests
+        version: 1.8.2
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pypoetry
+        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
+
+    - name: Install dependencies
       run: |
-        poetry install --no-interaction --no-root
-        poetry run black --check .
-        poetry run pytest tests/
+        poetry install --no-interaction
+
+    - name: Run black formatter check
+      run: |
+        poetry run black --check src/ tests/
+
+    - name: Run ruff linter
+      run: |
+        poetry run ruff check src/ tests/
+
+    - name: Run mypy type checker
+      run: |
+        poetry run mypy src/
+
+    - name: Run tests with coverage
+      run: |
+        poetry run pytest --cov=hier_config_cli --cov-report=xml --cov-report=term-missing
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      if: matrix.python-version == '3.12'
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v4
+      if: matrix.python-version == '3.12'
+      with:
+        name: coverage-report
+        path: htmlcov/
+        retention-days: 7
