@@ -125,38 +125,42 @@ def process_configs(
         raise click.ClickException(
             f"Unknown platform: {platform_str}. "
             f"Use 'list-platforms' to see available platforms."
-        )
+        ) from None
 
     try:
         logger.info(f"Reading running config from: {running_config_path}")
         running_config_text = read_text_from_file(running_config_path)
     except FileNotFoundError:
-        raise click.ClickException(f"Running config file not found: {running_config_path}")
+        raise click.ClickException(
+            f"Running config file not found: {running_config_path}"
+        ) from None
     except PermissionError:
         raise click.ClickException(
             f"Permission denied reading running config: {running_config_path}"
-        )
+        ) from None
     except Exception as e:
-        raise click.ClickException(f"Error reading running config: {e}")
+        raise click.ClickException(f"Error reading running config: {e}") from e
 
     try:
         logger.info(f"Reading generated config from: {generated_config_path}")
         generated_config_text = read_text_from_file(generated_config_path)
     except FileNotFoundError:
-        raise click.ClickException(f"Generated config file not found: {generated_config_path}")
+        raise click.ClickException(
+            f"Generated config file not found: {generated_config_path}"
+        ) from None
     except PermissionError:
         raise click.ClickException(
             f"Permission denied reading generated config: {generated_config_path}"
-        )
+        ) from None
     except Exception as e:
-        raise click.ClickException(f"Error reading generated config: {e}")
+        raise click.ClickException(f"Error reading generated config: {e}") from e
 
     try:
         logger.info("Parsing configurations")
         running_hconfig = get_hconfig(platform_enum, running_config_text)
         generated_hconfig = get_hconfig(platform_enum, generated_config_text)
     except Exception as e:
-        raise click.ClickException(f"Error parsing configuration: {e}")
+        raise click.ClickException(f"Error parsing configuration: {e}") from e
 
     try:
         logger.info(f"Generating {operation} configuration")
@@ -170,7 +174,7 @@ def process_configs(
                 else workflow.rollback_config
             )
     except Exception as e:
-        raise click.ClickException(f"Error generating {operation}: {e}")
+        raise click.ClickException(f"Error generating {operation}: {e}") from e
 
     return result, platform_enum
 
@@ -248,7 +252,8 @@ def remediation(
     generated config.
 
     Example:
-        hier-config-cli remediation --platform ios --running-config running.conf --generated-config intended.conf
+        hier-config-cli remediation --platform ios \\
+            --running-config running.conf --generated-config intended.conf
     """
     result, platform_enum = process_configs(
         platform, running_config, generated_config, "remediation"
@@ -257,14 +262,14 @@ def remediation(
     try:
         output = format_output(result, platform_enum, output_format)
     except ValueError as e:
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
 
     if output_file:
         try:
             Path(output_file).write_text(output)
             click.echo(f"Remediation configuration written to: {output_file}", err=True)
         except Exception as e:
-            raise click.ClickException(f"Error writing output file: {e}")
+            raise click.ClickException(f"Error writing output file: {e}") from e
     else:
         click.echo("\n=== Remediation Configuration ===")
         click.echo(output)
@@ -286,21 +291,22 @@ def rollback(
     procedures before making changes.
 
     Example:
-        hier-config-cli rollback --platform ios --running-config running.conf --generated-config intended.conf
+        hier-config-cli rollback --platform ios \\
+            --running-config running.conf --generated-config intended.conf
     """
     result, platform_enum = process_configs(platform, running_config, generated_config, "rollback")
 
     try:
         output = format_output(result, platform_enum, output_format)
     except ValueError as e:
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
 
     if output_file:
         try:
             Path(output_file).write_text(output)
             click.echo(f"Rollback configuration written to: {output_file}", err=True)
         except Exception as e:
-            raise click.ClickException(f"Error writing output file: {e}")
+            raise click.ClickException(f"Error writing output file: {e}") from e
     else:
         click.echo("\n=== Rollback Configuration ===")
         click.echo(output)
@@ -321,21 +327,22 @@ def future(
     the generated configuration to the running configuration.
 
     Example:
-        hier-config-cli future --platform ios --running-config running.conf --generated-config intended.conf
+        hier-config-cli future --platform ios \\
+            --running-config running.conf --generated-config intended.conf
     """
     result, platform_enum = process_configs(platform, running_config, generated_config, "future")
 
     try:
         output = format_output(result, platform_enum, output_format)
     except ValueError as e:
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
 
     if output_file:
         try:
             Path(output_file).write_text(output)
             click.echo(f"Future configuration written to: {output_file}", err=True)
         except Exception as e:
-            raise click.ClickException(f"Error writing output file: {e}")
+            raise click.ClickException(f"Error writing output file: {e}") from e
     else:
         click.echo("\n=== Future Configuration ===")
         click.echo(output)

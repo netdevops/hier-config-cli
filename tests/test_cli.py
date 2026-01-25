@@ -40,7 +40,11 @@ def mock_generated_config(tmp_path: Path) -> str:
     """
     config_path = tmp_path / "generated_config.conf"
     config_path.write_text(
-        "hostname test-router-updated\ninterface Vlan1\n ip address 10.0.0.1 255.255.255.0\ninterface Vlan2\n ip address 10.0.1.1 255.255.255.0\n"
+        "hostname test-router-updated\n"
+        "interface Vlan1\n"
+        " ip address 10.0.0.1 255.255.255.0\n"
+        "interface Vlan2\n"
+        " ip address 10.0.1.1 255.255.255.0\n"
     )
     return str(config_path)
 
