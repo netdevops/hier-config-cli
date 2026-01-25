@@ -3,8 +3,9 @@
 import json
 import logging
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, TypeVar
 
 import click
 import yaml
@@ -245,7 +246,7 @@ def remediation(
     running_config: str,
     generated_config: str,
     output_format: str,
-    output_file: Optional[str],
+    output_file: str | None,
 ) -> None:
     """Generate the remediation configuration.
 
@@ -284,7 +285,7 @@ def rollback(
     running_config: str,
     generated_config: str,
     output_format: str,
-    output_file: Optional[str],
+    output_file: str | None,
 ) -> None:
     """Generate the rollback configuration.
 
@@ -321,7 +322,7 @@ def future(
     running_config: str,
     generated_config: str,
     output_format: str,
-    output_file: Optional[str],
+    output_file: str | None,
 ) -> None:
     """Generate the future configuration.
 
