@@ -37,6 +37,9 @@ pytest-cov = "^6.0.0"
 mypy = "^1.13.0"
 ruff = "^0.8.4"
 types-pyyaml = "^6.0.12"
+mkdocs = "^1.5.3"
+mkdocs-material = "^9.5.3"
+mkdocstrings = {extras = ["python"], version = "^0.24.0"}
 
 [build-system]
 requires = ["poetry-core"]
