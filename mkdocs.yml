@@ -39,14 +39,8 @@ theme:
     repo: fontawesome/brands/github
 
 plugins:
-  - search
-  - mkdocstrings:
-      handlers:
-        python:
-          paths: [src]
-          options:
-            docstring_style: google
-            show_source: true
+  - search:
+      lang: en
 
 markdown_extensions:
   - pymdownx.highlight:
