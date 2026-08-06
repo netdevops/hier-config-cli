@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added the `prepare-release.yml` workflow: an admin-only manual dispatch
+  that bumps the version (major/minor/patch/prerelease), syncs
+  `__main__.py:__version__`, rotates the CHANGELOG `Unreleased` section,
+  opens a release PR, and creates a draft GitHub release
+- Added the `release.yml` workflow, which builds and publishes the package
+  to PyPI when a GitHub release is published (using the `PYPI_TOKEN` secret)
 - Added support for the Aruba AOS-CX (`aruba_aoscx`), Huawei VRP (`huawei_vrp`),
   and Nokia SR Linux (`nokia_srl`) platforms introduced in hier-config v4
 - Added `scripts/build.py`, the parallel lint/test runner ported from
@@ -35,6 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Removed black (formatting is handled by `ruff format`)
+- Removed `deploy.yaml`, which published to PyPI on the `release: created`
+  event; `release.yml` (on `release: published`) is now the single PyPI
+  publish path, since `created` never fires for drafts that get published
 
 ## [0.2.0] - 2026-01-25
 

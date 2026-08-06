@@ -1,0 +1,187 @@
+name: Prepare Release
+
+# The branch to release from is chosen via the standard "Run workflow"
+# branch dropdown in the GitHub UI: the workflow operates on the
+# dispatched ref (github.ref_name) for the version bump, the release
+# PR base, and the draft release target.
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump type
+        required: true
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require repository admin
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: context.actor,
+            });
+            if (data.permission !== 'admin') {
+              core.setFailed(
+                `@${context.actor} has '${data.permission}' permission; ` +
+                "only repository admins may prepare a release.",
+              );
+            }
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.2
+
+      - name: Bump version
+        id: bump
+        run: |
+          poetry version "${{ inputs.bump }}"
+          version="$(poetry version -s)"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Sync __version__ in __main__.py
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+        shell: python
+        run: |
+          import os
+          import pathlib
+          import re
+          import sys
+
+          version = os.environ["VERSION"]
+          path = pathlib.Path("src/hier_config_cli/__main__.py")
+          text = path.read_text(encoding="utf-8")
+          text, count = re.subn(
+              r'^__version__ = ".*"$',
+              f'__version__ = "{version}"',
+              text,
+              count=1,
+              flags=re.MULTILINE,
+          )
+          if count != 1:
+              sys.exit("Could not find __version__ assignment in __main__.py")
+          path.write_text(text, encoding="utf-8")
+
+      - name: Rotate changelog
+        if: inputs.bump != 'prerelease'
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+        shell: python
+        run: |
+          import datetime
+          import os
+          import pathlib
+          import re
+          import sys
+
+          version = os.environ["VERSION"]
+          path = pathlib.Path("CHANGELOG.md")
+          text = path.read_text(encoding="utf-8")
+          marker = "## [Unreleased]"
+          index = text.find(marker)
+          if index == -1:
+              sys.exit("CHANGELOG.md has no '## [Unreleased]' section")
+          head = text[: index + len(marker)]
+          rest = text[index + len(marker):]
+          match = re.search(r"\n## \[", rest)
+          body = rest[: match.start()] if match else rest
+          tail = rest[match.start():] if match else ""
+          if not body.strip():
+              sys.exit("The '## [Unreleased]' section is empty; nothing to release")
+          date = datetime.date.today().isoformat()
+          rotated = (
+              f"{head}\n\n## [{version}] - {date}{body.rstrip()}\n{tail}"
+          )
+          link = re.search(
+              r"^\[Unreleased\]: (?P<base>.+)/compare/(?P<prev>v\S+)\.\.\.HEAD$",
+              rotated,
+              flags=re.MULTILINE,
+          )
+          if link:
+              base = link.group("base")
+              prev = link.group("prev")
+              rotated = (
+                  rotated[: link.start()]
+                  + f"[Unreleased]: {base}/compare/v{version}...HEAD\n"
+                  + f"[{version}]: {base}/compare/{prev}...v{version}"
+                  + rotated[link.end():]
+              )
+          path.write_text(rotated, encoding="utf-8")
+          notes = pathlib.Path(os.environ["RUNNER_TEMP"]) / "release-notes.md"
+          notes.write_text(body.strip() + "\n", encoding="utf-8")
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and push release branch
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          branch="release/v${VERSION}"
+          git checkout -b "$branch"
+          git add pyproject.toml src/hier_config_cli/__main__.py CHANGELOG.md
+          git commit -m "chore(release): prepare ${VERSION}"
+          git push origin "$branch"
+
+      - name: Open release pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          {
+            echo "Automated ${{ inputs.bump }} release preparation for v${VERSION}."
+            echo
+            echo "Merge this PR first, then publish the draft release v${VERSION} to trigger the PyPI publish."
+          } > "${RUNNER_TEMP}/pr-body.md"
+          gh pr create \
+            --base "${{ github.ref_name }}" \
+            --head "release/v${VERSION}" \
+            --title "chore(release): prepare ${VERSION}" \
+            --body-file "${RUNNER_TEMP}/pr-body.md"
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          args=(
+            --target "${{ github.ref_name }}"
+            --draft
+            --title "v${VERSION}"
+          )
+          if printf '%s' "$VERSION" | grep -Eq '(a|b|rc|dev)'; then
+            args+=(--prerelease)
+          fi
+          if [ -f "${RUNNER_TEMP}/release-notes.md" ]; then
+            args+=(--notes-file "${RUNNER_TEMP}/release-notes.md")
+          else
+            args+=(--generate-notes)
+          fi
+          gh release create "v${VERSION}" "${args[@]}"

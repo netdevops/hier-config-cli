@@ -302,14 +302,24 @@ When adding new features:
 4. **Document thoroughly** in code and README
 5. **Update CHANGELOG** with your changes
 
-## Release Process
+## Releasing
 
-Maintainers handle releases. The process:
+Maintainers handle releases. The process is automated by two GitHub Actions
+workflows and requires repository admin permission:
 
-1. Update version in `pyproject.toml` and `src/hier_config_cli/__main__.py`
-2. Update CHANGELOG.md with release notes
-3. Create git tag for release
-4. GitHub Actions automatically publishes to PyPI
+1. Run the **Prepare Release** workflow (`prepare-release.yml`) from the
+   Actions tab: pick the branch to release from in the "Run workflow"
+   dropdown and choose the bump type (`major`, `minor`, `patch`, or
+   `prerelease`). The workflow bumps the version in `pyproject.toml` and
+   `src/hier_config_cli/__main__.py`, rotates the `## [Unreleased]`
+   CHANGELOG section into a dated release section (skipped for
+   prereleases), opens a release PR against the chosen branch, and creates
+   a draft GitHub release `vX.Y.Z` targeting that branch.
+2. Review and merge the release PR.
+3. Publish the draft release on GitHub.
+4. Publishing the release triggers the **Release** workflow
+   (`release.yml`), which builds and publishes the package to PyPI
+   automatically (`poetry publish --build` using the `PYPI_TOKEN` secret).
 
 ## Getting Help
 
