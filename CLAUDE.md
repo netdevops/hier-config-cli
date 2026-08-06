@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-hier-config-cli is a Click-based CLI tool for network configuration analysis built on the `hier-config` library. It compares running and intended device configs to generate remediation, rollback, and future-state configurations. Supports 10 network platforms (Cisco IOS/NXOS/XR, Arista EOS, Juniper JunOS, VyOS, FortiOS, HP Comware5/ProCurve, Generic).
+hier-config-cli is a Click-based CLI tool for network configuration analysis built on the `hier-config` library. It compares running and intended device configs to generate remediation, rollback, and future-state configurations. Supports 13 network platforms (Cisco IOS/NXOS/XR, Arista EOS, Aruba AOS-CX, Juniper JunOS, VyOS, FortiOS, HP Comware5/ProCurve, Huawei VRP, Nokia SR Linux, Generic).
 
 ## Build & Development Commands
 
@@ -37,9 +37,9 @@ The entire CLI lives in a single module: `src/hier_config_cli/__main__.py`. The 
 
 **Key flow:** All three config commands (`remediation`, `rollback`, `future`) share the same pattern:
 1. `common_options` decorator applies shared Click options (platform, running-config, generated-config, format, output)
-2. `process_configs()` validates the platform, reads both config files via `hier_config.utils.read_text_from_file`, parses them with `get_hconfig()`, then runs the requested operation via `WorkflowRemediation` (for remediation/rollback) or `HConfig.future()` (for future)
+2. `process_configs()` validates the platform, reads both config files via `hier_config.utils.read_text_from_file`, parses them with `HConfig.from_text()`, then runs the requested operation via `WorkflowRemediation` (for remediation/rollback) or `HConfig.future()` (for future)
 3. `format_output()` converts the result HConfig to text/JSON/YAML
-4. `get_output_text()` handles platform-specific formatting — JunOS uses `line.text`, all others use `line.cisco_style_text()`
+4. `get_output_text()` handles platform-specific formatting — JunOS uses `line.text`, all others use `line.indented_text()`
 
 **PLATFORM_MAP** dict maps CLI string names to `hier_config.Platform` enum values. To add a new platform, add it here, handle any special output formatting in `get_output_text()`, and add tests.
 

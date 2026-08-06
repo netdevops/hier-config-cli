@@ -387,6 +387,9 @@ def test_very_verbose_logging(mock_running_config: str, mock_generated_config: s
         "generic",
         "hp_comware5",
         "hp_procurve",
+        "aruba_aoscx",
+        "huawei_vrp",
+        "nokia_srl",
     ],
 )
 def test_all_platforms(platform: str, mock_running_config: str, mock_generated_config: str) -> None:

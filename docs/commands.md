@@ -164,14 +164,17 @@ hier-config-cli list-platforms
 **Output:**
 ```
 === Available Platforms ===
+  aruba_aoscx
   eos
   fortios
   generic
   hp_comware5
   hp_procurve
+  huawei_vrp
   ios
   iosxr
   junos
+  nokia_srl
   nxos
   vyos
 ```

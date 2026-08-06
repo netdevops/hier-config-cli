@@ -15,6 +15,9 @@ hier-config-cli supports multiple network device platforms through the underlyin
 | Fortinet FortiOS | `fortios` | Fortinet | Fortinet firewalls (v3.4.0+) |
 | HP Comware5 | `hp_comware5` | HP | HP Comware5 switches |
 | HP ProCurve | `hp_procurve` | HP | HP ProCurve switches |
+| Aruba AOS-CX | `aruba_aoscx` | Aruba | Aruba AOS-CX switches (hier-config v4+) |
+| Huawei VRP | `huawei_vrp` | Huawei | Huawei VRP routers and switches (hier-config v4+) |
+| Nokia SR Linux | `nokia_srl` | Nokia | Nokia SR Linux switches (hier-config v4+) |
 | Generic | `generic` | N/A | Generic/unknown platform |
 
 ## Platform-Specific Details
@@ -194,6 +197,57 @@ hier-config-cli remediation \
   --running-config hp_procurve_running.conf \
   --generated-config hp_procurve_intended.conf
 ```
+
+---
+
+### Aruba AOS-CX (`aruba_aoscx`)
+
+**Supported Devices:**
+- Aruba CX series switches
+
+**Example:**
+```bash
+hier-config-cli remediation \
+  --platform aruba_aoscx \
+  --running-config aruba_aoscx_running.conf \
+  --generated-config aruba_aoscx_intended.conf
+```
+
+**Requirements:** Requires hier-config version 4.0.0 or higher.
+
+---
+
+### Huawei VRP (`huawei_vrp`)
+
+**Supported Devices:**
+- Huawei routers and switches running VRP
+
+**Example:**
+```bash
+hier-config-cli remediation \
+  --platform huawei_vrp \
+  --running-config huawei_vrp_running.conf \
+  --generated-config huawei_vrp_intended.conf
+```
+
+**Requirements:** Requires hier-config version 4.0.0 or higher.
+
+---
+
+### Nokia SR Linux (`nokia_srl`)
+
+**Supported Devices:**
+- Nokia SR Linux data center switches
+
+**Example:**
+```bash
+hier-config-cli remediation \
+  --platform nokia_srl \
+  --running-config nokia_srl_running.conf \
+  --generated-config nokia_srl_intended.conf
+```
+
+**Requirements:** Requires hier-config version 4.0.0 or higher.
 
 ---
 

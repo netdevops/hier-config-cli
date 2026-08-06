@@ -26,7 +26,7 @@ include = ["src/hier_config_cli/py.typed"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-hier-config = "^3.3.0"
+hier-config = {version = ">=4.0.0b1,<5.0", allow-prereleases = true}
 click = "^8.1.7"
 pyyaml = "^6.0.2"
 

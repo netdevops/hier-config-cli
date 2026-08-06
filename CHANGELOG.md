@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added support for the Aruba AOS-CX (`aruba_aoscx`), Huawei VRP (`huawei_vrp`),
+  and Nokia SR Linux (`nokia_srl`) platforms introduced in hier-config v4
+
+### Changed
+- Migrated to hier-config 4.0.0b1: `get_hconfig()` replaced with
+  `HConfig.from_text()` and `cisco_style_text()` replaced with `indented_text()`
+- Pinned `hier-config` to `>=4.0.0b1,<5.0` (pre-releases allowed)
+
 ## [0.2.0] - 2026-01-25
 
 ### Added

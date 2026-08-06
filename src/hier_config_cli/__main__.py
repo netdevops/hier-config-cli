@@ -9,7 +9,7 @@ from typing import Any, TypeVar
 
 import click
 import yaml
-from hier_config import HConfig, Platform, WorkflowRemediation, get_hconfig
+from hier_config import HConfig, Platform, WorkflowRemediation
 from hier_config.utils import read_text_from_file
 
 F = TypeVar("F", bound=Callable[..., Any])
@@ -28,6 +28,9 @@ PLATFORM_MAP = {
     "generic": Platform.GENERIC,
     "hp_comware5": Platform.HP_COMWARE5,
     "hp_procurve": Platform.HP_PROCURVE,
+    "aruba_aoscx": Platform.ARUBA_AOSCX,
+    "huawei_vrp": Platform.HUAWEI_VRP,
+    "nokia_srl": Platform.NOKIA_SRL,
 }
 
 # Configure logging
@@ -71,7 +74,7 @@ def get_output_text(hconfig: HConfig, platform: Platform) -> str:
             lines.append(line.text)
         else:
             # Cisco-style platforms (IOS, NXOS, XR, EOS, etc.)
-            lines.append(line.cisco_style_text())
+            lines.append(line.indented_text())
     return "\n".join(lines)
 
 
@@ -160,8 +163,8 @@ def process_configs(
 
     try:
         logger.info("Parsing configurations")
-        running_hconfig = get_hconfig(platform_enum, running_config_text)
-        generated_hconfig = get_hconfig(platform_enum, generated_config_text)
+        running_hconfig = HConfig.from_text(platform_enum, running_config_text)
+        generated_hconfig = HConfig.from_text(platform_enum, generated_config_text)
     except Exception as e:
         raise click.ClickException(f"Error parsing configuration: {e}") from e
 

@@ -55,14 +55,17 @@ hier-config-cli list-platforms
 Output:
 ```
 === Available Platforms ===
+  aruba_aoscx
   eos
   fortios
   generic
   hp_comware5
   hp_procurve
+  huawei_vrp
   ios
   iosxr
   junos
+  nokia_srl
   nxos
   vyos
 ```
@@ -219,6 +222,9 @@ Shows the installed version of hier-config-cli.
 | Fortinet FortiOS | `fortios` | Fortinet firewalls |
 | HP Comware5 | `hp_comware5` | HP Comware5 switches |
 | HP ProCurve | `hp_procurve` | HP ProCurve switches |
+| Aruba AOS-CX | `aruba_aoscx` | Aruba AOS-CX switches |
+| Huawei VRP | `huawei_vrp` | Huawei VRP routers and switches |
+| Nokia SR Linux | `nokia_srl` | Nokia SR Linux switches |
 | Generic | `generic` | Generic/unknown platform |
 
 ## Integration Examples
