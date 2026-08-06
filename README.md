@@ -317,7 +317,7 @@ jobs:
 
 ### Prerequisites
 
-- Python 3.9 or higher
+- Python 3.10 or higher
 - Poetry (for dependency management)
 
 ### Setup Development Environment
@@ -337,34 +337,34 @@ poetry shell
 ### Running Tests
 
 ```bash
-# Run all tests
-pytest
+# Full lint + test suite (what CI runs)
+poetry run python scripts/build.py lint-and-test
 
-# Run with coverage
-pytest --cov=hier_config_cli --cov-report=html
+# Tests only (95% coverage required)
+poetry run python scripts/build.py pytest --coverage
 
-# Run specific test file
-pytest tests/test_cli.py
-
-# Run with verbose output
-pytest -v
+# Run a specific test file
+poetry run pytest tests/test_cli.py -v
 ```
 
 ### Code Quality
 
+All linters and type checkers run in parallel via the build script:
+
 ```bash
-# Format code with black
-black src/ tests/
+# Lint only (ruff format + check, mypy, pyright, pylint, yamllint, flynt)
+poetry run python scripts/build.py lint
 
-# Lint with ruff
-ruff check src/ tests/
+# Auto-fix formatting and fixable lint issues
+poetry run python scripts/build.py lint --fix
 
-# Type check with mypy
-mypy src/
-
-# Run all quality checks
-black src/ tests/ && ruff check src/ tests/ && mypy src/ && pytest
+# Auto-format code
+poetry run ruff format src tests scripts
 ```
+
+Standards: `ruff format` (not black), ruff `select = ["ALL"]` with preview
+rules at line length 88, mypy strict, pyright strict, pylint with extension
+plugins, and full type annotations everywhere — including tests.
 
 ## Contributing
 

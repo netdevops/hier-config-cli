@@ -8,27 +8,29 @@ hier-config-cli is a Click-based CLI tool for network configuration analysis bui
 
 ## Build & Development Commands
 
+All commands use **poetry** (not pip):
+
 ```bash
 # Install dependencies
 poetry install
 
-# Run all tests with coverage
-pytest
+# Full lint + test suite (equivalent to CI)
+poetry run python scripts/build.py lint-and-test
+
+# Lint only (ruff format + check, mypy, pyright, pylint, yamllint, flynt — run in parallel)
+poetry run python scripts/build.py lint
+
+# Auto-fix formatting and fixable lint issues
+poetry run python scripts/build.py lint --fix
+
+# Tests only (95% coverage required)
+poetry run python scripts/build.py pytest --coverage
 
 # Run a single test
-pytest tests/test_cli.py::test_version
+poetry run pytest tests/test_cli.py::test_version_command -v
 
-# Code formatting
-black src/ tests/
-
-# Linting
-ruff check src/ tests/
-
-# Type checking
-mypy src/
-
-# All quality checks
-black src/ tests/ && ruff check src/ tests/ && mypy src/ && pytest
+# Auto-format code
+poetry run ruff format src tests scripts
 ```
 
 ## Architecture
@@ -45,19 +47,25 @@ The entire CLI lives in a single module: `src/hier_config_cli/__main__.py`. The 
 
 ## Code Standards
 
-- Python 3.10+ (uses `X | Y` union syntax)
-- Black formatter, 100-char line length
-- Ruff linter rules: E, W, F, I, B, C4, UP
-- mypy strict mode (all functions must have type hints)
-- Google-style docstrings
+These mirror the hier_config library's standards and are enforced by `scripts/build.py lint`:
+
+- Python 3.10+ (uses `X | Y` union syntax); CI tests 3.10–3.14
+- `ruff format` for formatting (NOT black), line length 88
+- ruff linting with `select = ["ALL"]` and preview rules; the ignore list in `pyproject.toml` is the authoritative configuration — never loosen it to make a change pass
+- mypy strict + pyright strict; full type annotations everywhere, including tests. No `Any`, no unjustified `# type: ignore` or `# noqa`
+- pylint with extension plugins for checks not covered by ruff; yamllint for YAML; flynt for f-string enforcement
+- Google-style docstrings; use `r"""` when a docstring contains backslashes
 - Conventional commits: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`
+- Every PR adds a CHANGELOG.md entry under `## [Unreleased]` (Keep a Changelog categories)
 
 ## Testing
 
-Tests use Click's `CliRunner` for CLI invocation testing. Fixtures provide mock Cisco IOS and Juniper JunOS configs via temporary files. The test suite covers all commands, output formats, all platforms, error handling, and logging levels.
+- TDD: write a failing test first, confirm it fails for the right reason, implement minimally, then run the full suite. 95% coverage floor (enforced by `build.py pytest --coverage`).
+- Flat function-based tests (no classes), fully annotated; shared fixtures live in `tests/conftest.py`.
+- Tests use Click's `CliRunner` for CLI invocation testing. Fixtures provide mock Cisco IOS and Juniper JunOS configs via temporary files. `tests/test_cli.py` covers commands, output formats, platforms, and logging levels; `tests/test_helpers.py` covers error paths through the public helpers.
 
 ## CI/CD
 
-- `test-app.yaml`: Runs black, ruff, mypy, and pytest on Python 3.10–3.13 for every push/PR to main
+- `test-app.yaml`: Runs `scripts/build.py lint` and `scripts/build.py pytest --coverage` on Python 3.10–3.14 for every push/PR to main and next
 - `deploy.yaml`: Publishes to PyPI via Poetry on GitHub release creation
 - Version is maintained in both `pyproject.toml` and `__main__.py:__version__`

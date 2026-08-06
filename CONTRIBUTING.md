@@ -56,10 +56,9 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 
 1. Update the README.md or relevant documentation with details of changes
 2. Add entries to CHANGELOG.md under "Unreleased" section
-3. Ensure the test suite passes (`pytest`)
-4. Ensure code quality checks pass (`black`, `ruff`, `mypy`)
-5. Update type hints for any new functions or modified signatures
-6. Request review from maintainers
+3. Ensure the full quality gate passes (`poetry run python scripts/build.py lint-and-test`)
+4. Update type hints for any new functions or modified signatures
+5. Request review from maintainers
 
 ## Development Workflow
 
@@ -102,23 +101,23 @@ git checkout -b fix/bug-description
 4. **Check code quality** with linters and type checker
 
 ```bash
-# Run tests
-pytest
+# Full lint + test suite (equivalent to CI)
+poetry run python scripts/build.py lint-and-test
 
-# Check test coverage
-pytest --cov=hier_config_cli --cov-report=html
+# Lint only (ruff format + check, mypy, pyright, pylint, yamllint, flynt — run in parallel)
+poetry run python scripts/build.py lint
 
-# Format code with black
-black src/ tests/
+# Auto-fix formatting and fixable lint issues
+poetry run python scripts/build.py lint --fix
 
-# Lint with ruff
-ruff check src/ tests/
+# Tests only (95% coverage required)
+poetry run python scripts/build.py pytest --coverage
 
-# Type check with mypy
-mypy src/
+# Run a single test
+poetry run pytest tests/test_cli.py::test_version_command -v
 
-# Run all checks at once
-black src/ tests/ && ruff check src/ tests/ && mypy src/ && pytest
+# Auto-format code
+poetry run ruff format src tests scripts
 ```
 
 ### Committing Changes
@@ -161,9 +160,10 @@ git push origin feature/your-feature-name
 ### Python Style Guide
 
 - Follow [PEP 8](https://peps.python.org/pep-0008/) style guide
-- Use [Black](https://github.com/psf/black) for code formatting (line length: 100)
-- Use [Ruff](https://github.com/astral-sh/ruff) for linting
-- Use [mypy](https://mypy.readthedocs.io/) for type checking
+- Use [Ruff](https://github.com/astral-sh/ruff) for both formatting (`ruff format`, line length: 88) and linting (`select = ["ALL"]` with preview rules)
+- Use [mypy](https://mypy.readthedocs.io/) (strict) and [pyright](https://microsoft.github.io/pyright/) (strict) for type checking
+- Use [pylint](https://pylint.readthedocs.io/) with extension plugins for checks not covered by ruff
+- Never loosen the lint or coverage configuration to make a change pass; do not add `# type: ignore` or `# noqa` suppressions without a justifying reason
 
 ### Code Organization
 
@@ -218,11 +218,12 @@ def save_output(content: str, filepath: Optional[Path] = None) -> None:
 
 ### Testing Standards
 
-- Write tests for all new functionality
-- Maintain or improve code coverage
-- Test both happy paths and error cases
-- Use descriptive test names
-- Include docstrings in test functions
+- Write tests first (TDD): add a failing test, confirm it fails for the right reason, then implement minimally
+- Flat function-based tests (no test classes), with full type annotations
+- Shared fixtures live in `tests/conftest.py`
+- Maintain the 95% coverage floor (CI enforces it); test both happy paths and error cases
+- Test the CLI through Click's `CliRunner`
+- Use descriptive test names and include docstrings in test functions
 
 ```python
 def test_remediation_with_invalid_platform(
@@ -253,13 +254,18 @@ hier-config-cli/
 │       ├── __main__.py      # Main CLI code
 │       └── py.typed         # Type hints marker
 ├── tests/
-│   └── test_cli.py          # Test suite
+│   ├── conftest.py          # Shared fixtures
+│   ├── test_cli.py          # CLI command tests
+│   └── test_helpers.py      # Helper/error-path tests
+├── scripts/
+│   └── build.py             # Parallel lint/test runner
 ├── examples/                # Example configurations
 │   ├── cisco_ios_running.conf
 │   ├── cisco_ios_intended.conf
 │   └── README.md
 ├── .github/
 │   └── workflows/           # CI/CD workflows
+├── .yamllint.yml            # yamllint configuration
 ├── pyproject.toml           # Project configuration
 ├── README.md                # Main documentation
 ├── CONTRIBUTING.md          # This file

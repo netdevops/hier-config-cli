@@ -10,11 +10,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added support for the Aruba AOS-CX (`aruba_aoscx`), Huawei VRP (`huawei_vrp`),
   and Nokia SR Linux (`nokia_srl`) platforms introduced in hier-config v4
+- Added `scripts/build.py`, the parallel lint/test runner ported from
+  hier_config (`lint`, `lint-and-test`, `pytest --coverage`, and per-tool
+  subcommands)
+- Added `.yamllint.yml` and yamllint to the lint suite
+- Added `tests/test_helpers.py` covering error paths (unknown platform,
+  unreadable/missing files, parse/generation/formatting/write failures),
+  bringing coverage to 100%
+- Added Python 3.14 to the supported versions and CI matrix
 
 ### Changed
 - Migrated to hier-config 4.0.0b1: `get_hconfig()` replaced with
   `HConfig.from_text()` and `cisco_style_text()` replaced with `indented_text()`
 - Pinned `hier-config` to `>=4.0.0b1,<5.0` (pre-releases allowed)
+- Adopted the hier_config library's development, testing, and linting
+  standards: `ruff format` replaces black, ruff `select = ["ALL"]` with
+  preview rules at line length 88, mypy strict, pyright strict, pylint with
+  extension plugins, flynt, and a 95% coverage floor
+- Restructured `__main__.py` error handling into small helpers with clean
+  single-statement try clauses; CLI behavior is unchanged
+- Moved shared test fixtures into `tests/conftest.py`
+- CI now runs `scripts/build.py lint` and `scripts/build.py pytest --coverage`
+  on Python 3.10-3.14 for pushes/PRs to `main` and `next`
+
+### Removed
+- Removed black (formatting is handled by `ruff format`)
 
 ## [0.2.0] - 2026-01-25
 
