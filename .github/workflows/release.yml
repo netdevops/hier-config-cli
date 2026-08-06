@@ -1,0 +1,38 @@
+name: Release
+
+# "published" (not "created") so the workflow fires when a draft release
+# created by prepare-release.yml is published; "created" never fires for
+# drafts that later get published.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/hier-config-cli/
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.2
+
+      - name: Publish to PyPI
+        run: |
+          poetry config pypi-token.pypi "${{ secrets.PYPI_TOKEN }}"
+          poetry publish --build
