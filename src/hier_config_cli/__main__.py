@@ -14,7 +14,7 @@ from hier_config.utils import read_text_from_file
 
 _CliCommand = TypeVar("_CliCommand", bound=Callable[..., None])
 
-__version__ = "0.2.0"
+__version__ = "0.2.1a0"
 
 # Mapping for driver platforms - includes all hier-config supported platforms
 PLATFORM_MAP = {
