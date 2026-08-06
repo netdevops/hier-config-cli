@@ -6,4 +6,4 @@ generating remediation steps, rollback configurations, and predicting future sta
 
 from hier_config_cli.__main__ import __version__, cli
 
-__all__ = ["cli", "__version__"]
+__all__ = ["__version__", "cli"]

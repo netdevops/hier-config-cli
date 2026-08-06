@@ -5,14 +5,14 @@ import logging
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import TypeVar
 
 import click
 import yaml
 from hier_config import HConfig, Platform, WorkflowRemediation
 from hier_config.utils import read_text_from_file
 
-F = TypeVar("F", bound=Callable[..., Any])
+_CliCommand = TypeVar("_CliCommand", bound=Callable[..., None])
 
 __version__ = "0.2.0"
 
@@ -33,7 +33,6 @@ PLATFORM_MAP = {
     "nokia_srl": Platform.NOKIA_SRL,
 }
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
 
@@ -42,6 +41,7 @@ def setup_logging(verbose: int) -> None:
 
     Args:
         verbose: Verbosity level (0=WARNING, 1=INFO, 2=DEBUG)
+
     """
     level = logging.WARNING
     if verbose == 1:
@@ -65,17 +65,13 @@ def get_output_text(hconfig: HConfig, platform: Platform) -> str:
 
     Returns:
         Formatted configuration text appropriate for the platform
+
     """
-    lines = []
-    for line in hconfig.all_children_sorted():
-        # Use platform-appropriate text formatting
-        if platform in (Platform.JUNIPER_JUNOS,):
-            # Juniper uses curly braces and different syntax
-            lines.append(line.text)
-        else:
-            # Cisco-style platforms (IOS, NXOS, XR, EOS, etc.)
-            lines.append(line.indented_text())
-    return "\n".join(lines)
+    if platform is Platform.JUNIPER_JUNOS:
+        # Juniper uses curly braces and different syntax
+        return "\n".join(line.text for line in hconfig.all_children_sorted())
+    # Cisco-style platforms (IOS, NXOS, XR, EOS, etc.)
+    return "\n".join(line.indented_text() for line in hconfig.all_children_sorted())
 
 
 def format_output(hconfig: HConfig, platform: Platform, output_format: str) -> str:
@@ -91,17 +87,78 @@ def format_output(hconfig: HConfig, platform: Platform, output_format: str) -> s
 
     Raises:
         ValueError: If output format is not supported
+
     """
+    text = get_output_text(hconfig, platform)
     if output_format == "text":
-        return get_output_text(hconfig, platform)
-    elif output_format == "json":
-        config_dict = {"config": get_output_text(hconfig, platform).split("\n")}
-        return json.dumps(config_dict, indent=2)
-    elif output_format == "yaml":
-        config_dict = {"config": get_output_text(hconfig, platform).split("\n")}
-        return yaml.dump(config_dict, default_flow_style=False)
-    else:
-        raise ValueError(f"Unsupported output format: {output_format}")
+        return text
+    if output_format == "json":
+        return json.dumps({"config": text.split("\n")}, indent=2)
+    if output_format == "yaml":
+        return yaml.dump({"config": text.split("\n")}, default_flow_style=False)
+    message = f"Unsupported output format: {output_format}"
+    raise ValueError(message)
+
+
+def _resolve_platform(platform_str: str) -> Platform:
+    """Resolve a platform name string to a Platform enum member."""
+    try:
+        return PLATFORM_MAP[platform_str.lower()]
+    except KeyError:
+        message = (
+            f"Unknown platform: {platform_str}. "
+            f"Use 'list-platforms' to see available platforms."
+        )
+        raise click.ClickException(message) from None
+
+
+def _read_config(path: str, description: str) -> str:
+    """Read a configuration file, converting failures to clean CLI errors."""
+    logger.info("Reading %s from: %s", description, path)
+    try:
+        return read_text_from_file(path)
+    except FileNotFoundError:
+        message = f"{description.capitalize()} file not found: {path}"
+        raise click.ClickException(message) from None
+    except PermissionError:
+        message = f"Permission denied reading {description}: {path}"
+        raise click.ClickException(message) from None
+    except (OSError, ValueError) as exc:
+        message = f"Error reading {description}: {exc}"
+        raise click.ClickException(message) from exc
+
+
+def _parse_config(platform: Platform, config_text: str) -> HConfig:
+    """Parse configuration text, converting failures to clean CLI errors."""
+    try:
+        return HConfig.from_text(platform, config_text)
+    except Exception as exc:
+        message = f"Error parsing configuration: {exc}"
+        raise click.ClickException(message) from exc
+
+
+def _run_operation(operation: str, running: HConfig, generated: HConfig) -> HConfig:
+    """Run the requested config operation and return the resulting HConfig."""
+    if operation == "future":
+        return running.future(generated)
+    workflow = WorkflowRemediation(running, generated)
+    if operation == "remediation":
+        return workflow.remediation_config
+    return workflow.rollback_config
+
+
+def _generate_config(
+    operation: str,
+    running: HConfig,
+    generated: HConfig,
+) -> HConfig:
+    """Generate the requested config, converting failures to clean CLI errors."""
+    logger.info("Generating %s configuration", operation)
+    try:
+        return _run_operation(operation, running, generated)
+    except Exception as exc:
+        message = f"Error generating {operation}: {exc}"
+        raise click.ClickException(message) from exc
 
 
 def process_configs(
@@ -121,67 +178,18 @@ def process_configs(
     Returns:
         Tuple of (result HConfig, Platform enum)
 
-    Raises:
-        click.ClickException: If processing fails
     """
-    try:
-        platform_enum = PLATFORM_MAP[platform_str.lower()]
-        logger.info(f"Using platform: {platform_str}")
-    except KeyError:
-        raise click.ClickException(
-            f"Unknown platform: {platform_str}. "
-            f"Use 'list-platforms' to see available platforms."
-        ) from None
+    platform_enum = _resolve_platform(platform_str)
+    logger.info("Using platform: %s", platform_str)
 
-    try:
-        logger.info(f"Reading running config from: {running_config_path}")
-        running_config_text = read_text_from_file(running_config_path)
-    except FileNotFoundError:
-        raise click.ClickException(
-            f"Running config file not found: {running_config_path}"
-        ) from None
-    except PermissionError:
-        raise click.ClickException(
-            f"Permission denied reading running config: {running_config_path}"
-        ) from None
-    except Exception as e:
-        raise click.ClickException(f"Error reading running config: {e}") from e
+    running_config_text = _read_config(running_config_path, "running config")
+    generated_config_text = _read_config(generated_config_path, "generated config")
 
-    try:
-        logger.info(f"Reading generated config from: {generated_config_path}")
-        generated_config_text = read_text_from_file(generated_config_path)
-    except FileNotFoundError:
-        raise click.ClickException(
-            f"Generated config file not found: {generated_config_path}"
-        ) from None
-    except PermissionError:
-        raise click.ClickException(
-            f"Permission denied reading generated config: {generated_config_path}"
-        ) from None
-    except Exception as e:
-        raise click.ClickException(f"Error reading generated config: {e}") from e
+    logger.info("Parsing configurations")
+    running_hconfig = _parse_config(platform_enum, running_config_text)
+    generated_hconfig = _parse_config(platform_enum, generated_config_text)
 
-    try:
-        logger.info("Parsing configurations")
-        running_hconfig = HConfig.from_text(platform_enum, running_config_text)
-        generated_hconfig = HConfig.from_text(platform_enum, generated_config_text)
-    except Exception as e:
-        raise click.ClickException(f"Error parsing configuration: {e}") from e
-
-    try:
-        logger.info(f"Generating {operation} configuration")
-        if operation == "future":
-            result = running_hconfig.future(generated_hconfig)
-        else:
-            workflow = WorkflowRemediation(running_hconfig, generated_hconfig)
-            result = (
-                workflow.remediation_config
-                if operation == "remediation"
-                else workflow.rollback_config
-            )
-    except Exception as e:
-        raise click.ClickException(f"Error generating {operation}: {e}") from e
-
+    result = _generate_config(operation, running_hconfig, generated_hconfig)
     return result, platform_enum
 
 
@@ -204,13 +212,16 @@ def cli(ctx: click.Context, verbose: int) -> None:
     setup_logging(verbose)
 
 
-def common_options(func: F) -> F:
+def common_options(func: _CliCommand) -> _CliCommand:
     """Reusable options for platform, running config, and generated config."""
     func = click.option(
         "--platform",
-        type=click.Choice(list(PLATFORM_MAP.keys()), case_sensitive=False),
+        type=click.Choice(list(PLATFORM_MAP), case_sensitive=False),
         required=True,
-        help="Platform driver to use (e.g., ios, nxos, iosxr, eos, junos, vyos, fortios, generic).",
+        help=(
+            "Platform driver to use "
+            "(e.g., ios, nxos, iosxr, eos, junos, vyos, fortios, generic)."
+        ),
     )(func)
     func = click.option(
         "--running-config",
@@ -231,7 +242,7 @@ def common_options(func: F) -> F:
         default="text",
         help="Output format (default: text).",
     )(func)
-    func = click.option(
+    return click.option(
         "--output",
         "-o",
         "output_file",
@@ -239,7 +250,28 @@ def common_options(func: F) -> F:
         default=None,
         help="Write output to file instead of stdout.",
     )(func)
-    return func
+
+
+def _format_or_fail(result: HConfig, platform: Platform, output_format: str) -> str:
+    """Format the result, converting formatting failures to clean CLI errors."""
+    try:
+        return format_output(result, platform, output_format)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+
+def _emit_output(output: str, output_file: str | None, title: str) -> None:
+    """Write the output to a file, or echo it to stdout with a title banner."""
+    if output_file:
+        try:
+            Path(output_file).write_text(output, encoding="utf-8")
+        except OSError as exc:
+            message = f"Error writing output file: {exc}"
+            raise click.ClickException(message) from exc
+        click.echo(f"{title} written to: {output_file}", err=True)
+    else:
+        click.echo(f"\n=== {title} ===")
+        click.echo(output)
 
 
 @cli.command()
@@ -251,34 +283,25 @@ def remediation(
     output_format: str,
     output_file: str | None,
 ) -> None:
-    """Generate the remediation configuration.
+    r"""Generate the remediation configuration.
 
     Compares the running configuration with the generated (intended) configuration
     and produces the commands needed to transform the running config into the
     generated config.
 
     Example:
-        hier-config-cli remediation --platform ios \\
+        hier-config-cli remediation --platform ios \
             --running-config running.conf --generated-config intended.conf
+
     """
     result, platform_enum = process_configs(
-        platform, running_config, generated_config, "remediation"
+        platform,
+        running_config,
+        generated_config,
+        "remediation",
     )
-
-    try:
-        output = format_output(result, platform_enum, output_format)
-    except ValueError as e:
-        raise click.ClickException(str(e)) from e
-
-    if output_file:
-        try:
-            Path(output_file).write_text(output)
-            click.echo(f"Remediation configuration written to: {output_file}", err=True)
-        except Exception as e:
-            raise click.ClickException(f"Error writing output file: {e}") from e
-    else:
-        click.echo("\n=== Remediation Configuration ===")
-        click.echo(output)
+    output = _format_or_fail(result, platform_enum, output_format)
+    _emit_output(output, output_file, "Remediation Configuration")
 
 
 @cli.command()
@@ -290,32 +313,25 @@ def rollback(
     output_format: str,
     output_file: str | None,
 ) -> None:
-    """Generate the rollback configuration.
+    r"""Generate the rollback configuration.
 
     Produces the commands needed to revert from the generated configuration
     back to the running configuration. This is useful for preparing rollback
     procedures before making changes.
 
     Example:
-        hier-config-cli rollback --platform ios \\
+        hier-config-cli rollback --platform ios \
             --running-config running.conf --generated-config intended.conf
+
     """
-    result, platform_enum = process_configs(platform, running_config, generated_config, "rollback")
-
-    try:
-        output = format_output(result, platform_enum, output_format)
-    except ValueError as e:
-        raise click.ClickException(str(e)) from e
-
-    if output_file:
-        try:
-            Path(output_file).write_text(output)
-            click.echo(f"Rollback configuration written to: {output_file}", err=True)
-        except Exception as e:
-            raise click.ClickException(f"Error writing output file: {e}") from e
-    else:
-        click.echo("\n=== Rollback Configuration ===")
-        click.echo(output)
+    result, platform_enum = process_configs(
+        platform,
+        running_config,
+        generated_config,
+        "rollback",
+    )
+    output = _format_or_fail(result, platform_enum, output_format)
+    _emit_output(output, output_file, "Rollback Configuration")
 
 
 @cli.command()
@@ -327,31 +343,24 @@ def future(
     output_format: str,
     output_file: str | None,
 ) -> None:
-    """Generate the future configuration.
+    r"""Generate the future configuration.
 
     Predicts what the complete configuration will look like after applying
     the generated configuration to the running configuration.
 
     Example:
-        hier-config-cli future --platform ios \\
+        hier-config-cli future --platform ios \
             --running-config running.conf --generated-config intended.conf
+
     """
-    result, platform_enum = process_configs(platform, running_config, generated_config, "future")
-
-    try:
-        output = format_output(result, platform_enum, output_format)
-    except ValueError as e:
-        raise click.ClickException(str(e)) from e
-
-    if output_file:
-        try:
-            Path(output_file).write_text(output)
-            click.echo(f"Future configuration written to: {output_file}", err=True)
-        except Exception as e:
-            raise click.ClickException(f"Error writing output file: {e}") from e
-    else:
-        click.echo("\n=== Future Configuration ===")
-        click.echo(output)
+    result, platform_enum = process_configs(
+        platform,
+        running_config,
+        generated_config,
+        "future",
+    )
+    output = _format_or_fail(result, platform_enum, output_format)
+    _emit_output(output, output_file, "Future Configuration")
 
 
 @cli.command()
@@ -362,7 +371,7 @@ def list_platforms() -> None:
     with the --platform option.
     """
     click.echo("\n=== Available Platforms ===")
-    for platform in sorted(PLATFORM_MAP.keys()):
+    for platform in sorted(PLATFORM_MAP):
         click.echo(f"  {platform}")
     click.echo()
 
@@ -373,5 +382,6 @@ def version() -> None:
     click.echo(f"hier-config-cli version {__version__}")
 
 
-if __name__ == "__main__":
-    cli()
+if __name__ == "__main__":  # pragma: no cover - process-entry glue
+    # click injects the group's arguments at invocation time.
+    cli()  # pylint: disable=no-value-for-parameter

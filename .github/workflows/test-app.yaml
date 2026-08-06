@@ -1,10 +1,10 @@
-name: hier-config-cli test
+name: hier-config-cli build and test
 
 on:
   push:
-    branches: [main]
+    branches: [main, next]
   pull_request:
-    branches: [main]
+    branches: [main, next]
 
 jobs:
   test:
@@ -16,6 +16,7 @@ jobs:
         - "3.11"
         - "3.12"
         - "3.13"
+        - "3.14"
 
     steps:
     - uses: actions/checkout@v4
@@ -42,21 +43,18 @@ jobs:
       run: |
         poetry install --no-interaction
 
-    - name: Run black formatter check
+    - name: Lint
       run: |
-        poetry run black --check src/ tests/
-
-    - name: Run ruff linter
-      run: |
-        poetry run ruff check src/ tests/
-
-    - name: Run mypy type checker
-      run: |
-        poetry run mypy src/
+        poetry run python scripts/build.py lint
 
     - name: Run tests with coverage
       run: |
-        poetry run pytest --cov=hier_config_cli --cov-report=xml --cov-report=term-missing
+        poetry run python scripts/build.py pytest --coverage
+
+    - name: Generate coverage XML report
+      if: matrix.python-version == '3.12'
+      run: |
+        poetry run coverage xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
@@ -66,11 +64,3 @@ jobs:
         flags: unittests
         name: codecov-umbrella
         fail_ci_if_error: false
-
-    - name: Upload coverage reports
-      uses: actions/upload-artifact@v4
-      if: matrix.python-version == '3.12'
-      with:
-        name: coverage-report
-        path: htmlcov/
-        retention-days: 7

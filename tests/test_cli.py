@@ -10,75 +10,6 @@ from click.testing import CliRunner
 from hier_config_cli import cli
 
 
-# Define test fixtures for mock configurations
-@pytest.fixture
-def mock_running_config(tmp_path: Path) -> str:
-    """Create a mock running configuration file.
-
-    Args:
-        tmp_path: Pytest temporary directory fixture
-
-    Returns:
-        Path to the mock running config file
-    """
-    config_path = tmp_path / "running_config.conf"
-    config_path.write_text(
-        "hostname test-router\ninterface Vlan1\n ip address 10.0.0.1 255.255.255.0\n"
-    )
-    return str(config_path)
-
-
-@pytest.fixture
-def mock_generated_config(tmp_path: Path) -> str:
-    """Create a mock generated configuration file.
-
-    Args:
-        tmp_path: Pytest temporary directory fixture
-
-    Returns:
-        Path to the mock generated config file
-    """
-    config_path = tmp_path / "generated_config.conf"
-    config_path.write_text(
-        "hostname test-router-updated\n"
-        "interface Vlan1\n"
-        " ip address 10.0.0.1 255.255.255.0\n"
-        "interface Vlan2\n"
-        " ip address 10.0.1.1 255.255.255.0\n"
-    )
-    return str(config_path)
-
-
-@pytest.fixture
-def mock_junos_running_config(tmp_path: Path) -> str:
-    """Create a mock Junos running configuration file.
-
-    Args:
-        tmp_path: Pytest temporary directory fixture
-
-    Returns:
-        Path to the mock Junos running config file
-    """
-    config_path = tmp_path / "junos_running.conf"
-    config_path.write_text("system {\n    host-name test-router;\n}\n")
-    return str(config_path)
-
-
-@pytest.fixture
-def mock_junos_generated_config(tmp_path: Path) -> str:
-    """Create a mock Junos generated configuration file.
-
-    Args:
-        tmp_path: Pytest temporary directory fixture
-
-    Returns:
-        Path to the mock Junos generated config file
-    """
-    config_path = tmp_path / "junos_generated.conf"
-    config_path.write_text("system {\n    host-name test-router-updated;\n}\n")
-    return str(config_path)
-
-
 # Test `version` command
 def test_version_command() -> None:
     """Test the version command."""
@@ -103,7 +34,9 @@ def test_list_platforms() -> None:
 
 
 # Test `remediation` command - happy path
-def test_remediation_command(mock_running_config: str, mock_generated_config: str) -> None:
+def test_remediation_command(
+    mock_running_config: str, mock_generated_config: str
+) -> None:
     """Test remediation command with valid inputs."""
     runner = CliRunner()
     result = runner.invoke(
@@ -125,7 +58,9 @@ def test_remediation_command(mock_running_config: str, mock_generated_config: st
 
 
 # Test `remediation` command - JSON output
-def test_remediation_json_output(mock_running_config: str, mock_generated_config: str) -> None:
+def test_remediation_json_output(
+    mock_running_config: str, mock_generated_config: str
+) -> None:
     """Test remediation command with JSON output format."""
     runner = CliRunner()
     result = runner.invoke(
@@ -145,7 +80,9 @@ def test_remediation_json_output(mock_running_config: str, mock_generated_config
     assert result.exit_code == 0
     # Parse JSON to verify it's valid
     output_lines = result.output.split("\n")
-    json_start = next(i for i, line in enumerate(output_lines) if line.strip().startswith("{"))
+    json_start = next(
+        i for i, line in enumerate(output_lines) if line.strip().startswith("{")
+    )
     json_output = "\n".join(output_lines[json_start:])
     data = json.loads(json_output)
     assert "config" in data
@@ -153,7 +90,9 @@ def test_remediation_json_output(mock_running_config: str, mock_generated_config
 
 
 # Test `remediation` command - YAML output
-def test_remediation_yaml_output(mock_running_config: str, mock_generated_config: str) -> None:
+def test_remediation_yaml_output(
+    mock_running_config: str, mock_generated_config: str
+) -> None:
     """Test remediation command with YAML output format."""
     runner = CliRunner()
     result = runner.invoke(
@@ -203,7 +142,7 @@ def test_remediation_output_file(
     )
     assert result.exit_code == 0
     assert output_file.exists()
-    content = output_file.read_text()
+    content = output_file.read_text(encoding="utf-8")
     assert "no hostname test-router" in content
     assert "hostname test-router-updated" in content
 
@@ -311,7 +250,7 @@ def test_missing_generated_config(mock_running_config: str) -> None:
 def test_unreadable_file(tmp_path: Path, mock_generated_config: str) -> None:
     """Test error handling for unreadable config file."""
     unreadable_file = tmp_path / "unreadable.conf"
-    unreadable_file.write_text("hostname test")
+    unreadable_file.write_text("hostname test", encoding="utf-8")
     unreadable_file.chmod(0o000)
 
     runner = CliRunner()
@@ -354,7 +293,9 @@ def test_verbose_logging(mock_running_config: str, mock_generated_config: str) -
     assert result.exit_code == 0
 
 
-def test_very_verbose_logging(mock_running_config: str, mock_generated_config: str) -> None:
+def test_very_verbose_logging(
+    mock_running_config: str, mock_generated_config: str
+) -> None:
     """Test very verbose (debug) logging output."""
     runner = CliRunner()
     result = runner.invoke(
@@ -376,7 +317,7 @@ def test_very_verbose_logging(mock_running_config: str, mock_generated_config: s
 # Test all platforms
 @pytest.mark.parametrize(
     "platform",
-    [
+    (
         "ios",
         "nxos",
         "iosxr",
@@ -390,9 +331,11 @@ def test_very_verbose_logging(mock_running_config: str, mock_generated_config: s
         "aruba_aoscx",
         "huawei_vrp",
         "nokia_srl",
-    ],
+    ),
 )
-def test_all_platforms(platform: str, mock_running_config: str, mock_generated_config: str) -> None:
+def test_all_platforms(
+    platform: str, mock_running_config: str, mock_generated_config: str
+) -> None:
     """Test remediation command works with all supported platforms."""
     runner = CliRunner()
     result = runner.invoke(
