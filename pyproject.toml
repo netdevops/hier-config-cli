@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hier-config-cli"
-version = "0.2.0"
+version = "0.2.1a0"
 description = "A command-line interface tool for network configuration analysis, remediation, and rollback built on top of the Hier Config library"
 authors = ["James Williams <james.williams@packetgeek.net>"]
 license = "Apache-2.0"
