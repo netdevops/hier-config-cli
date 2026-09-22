@@ -49,7 +49,7 @@ The entire CLI lives in a single module: `src/hier_config_cli/__main__.py`. The 
 
 These mirror the hier_config library's standards and are enforced by `scripts/build.py lint`:
 
-- Python 3.10+ (uses `X | Y` union syntax); CI tests 3.10–3.14
+- Python 3.11+ (uses `X | Y` union syntax); CI tests 3.11–3.14
 - `ruff format` for formatting (NOT black), line length 88
 - ruff linting with `select = ["ALL"]` and preview rules; the ignore list in `pyproject.toml` is the authoritative configuration — never loosen it to make a change pass
 - mypy strict + pyright strict; full type annotations everywhere, including tests. No `Any`, no unjustified `# type: ignore` or `# noqa`
@@ -66,7 +66,7 @@ These mirror the hier_config library's standards and are enforced by `scripts/bu
 
 ## CI/CD
 
-- `test-app.yaml`: Runs `scripts/build.py lint` and `scripts/build.py pytest --coverage` on Python 3.10–3.14 for every push/PR to main and next
+- `test-app.yaml`: Runs `scripts/build.py lint` and `scripts/build.py pytest --coverage` on Python 3.11–3.14 for every push/PR to main and next
 - `prepare-release.yml`: Manually dispatched (admins only). Bumps the version (`poetry version <bump>`), syncs `__main__.py:__version__`, rotates the CHANGELOG `## [Unreleased]` section (except for prereleases), opens a release PR against the dispatched branch, and creates a draft GitHub release. Releasing: merge the release PR, then publish the draft release.
 - `release.yml`: Publishes to PyPI (`poetry publish --build` with the `PYPI_TOKEN` secret) when a GitHub release is published — the single PyPI publish path (replaces the old `deploy.yaml`)
 - Version is maintained in both `pyproject.toml` and `__main__.py:__version__`; `prepare-release.yml` keeps them in sync

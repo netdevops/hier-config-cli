@@ -317,7 +317,7 @@ jobs:
 
 ### Prerequisites
 
-- Python 3.10 or higher
+- Python 3.11 or higher
 - Poetry (for dependency management)
 
 ### Setup Development Environment

@@ -22,7 +22,7 @@ hier-config-cli maintains high code quality through:
 ```toml
 [tool.black]
 line-length = 100
-target-version = ["py310", "py311", "py312", "py313"]
+target-version = ["py311", "py312", "py313"]
 ```
 
 ### Usage
@@ -67,7 +67,7 @@ black src/hier_config_cli/__main__.py
 ```toml
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = [
@@ -149,7 +149,7 @@ def process(items=None):
 **pyproject.toml:**
 ```toml
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 warn_return_any = false
 warn_unused_configs = true
 disallow_untyped_defs = true

@@ -49,6 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `test_version_command` asserted a hardcoded `0.2.0` in the version output,
   so the `version` command failed once the package bumped to `0.2.1a0`. The
   test now compares against `__version__`.
+- Python 3.10 support dropped: `requires-python` is now `^3.11`, the CI
+  matrix no longer tests 3.10, and the pydantic pin was raised to `>=2.12`
+  so `pydantic-core` ships a cp314 wheel and the Python 3.14 CI job no
+  longer fails building it from source.
 
 ## [0.2.0] - 2026-01-25
 
