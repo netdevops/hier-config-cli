@@ -45,6 +45,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   event; `release.yml` (on `release: published`) is now the single PyPI
   publish path, since `created` never fires for drafts that get published
 
+### Fixed
+- Python 3.10 support dropped: `requires-python` is now `^3.11`, the CI
+  matrix no longer tests 3.10, and the pydantic pin was raised to `>=2.12`
+  so `pydantic-core` ships a cp314 wheel and the Python 3.14 CI job no
+  longer fails building it from source.
+
 ## [0.2.0] - 2026-01-25
 
 ### Added
