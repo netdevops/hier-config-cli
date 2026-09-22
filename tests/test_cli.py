@@ -7,7 +7,7 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
-from hier_config_cli import cli
+from hier_config_cli import __version__, cli
 
 
 # Test `version` command
@@ -17,7 +17,7 @@ def test_version_command() -> None:
     result = runner.invoke(cli, ["version"])
     assert result.exit_code == 0
     assert "hier-config-cli version" in result.output
-    assert "0.2.0" in result.output
+    assert __version__ in result.output
 
 
 # Test `list_platforms` command

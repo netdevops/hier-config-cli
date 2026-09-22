@@ -45,6 +45,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   event; `release.yml` (on `release: published`) is now the single PyPI
   publish path, since `created` never fires for drafts that get published
 
+### Fixed
+- `test_version_command` asserted a hardcoded `0.2.0` in the version output,
+  so the `version` command failed once the package bumped to `0.2.1a0`. The
+  test now compares against `__version__`.
+
 ## [0.2.0] - 2026-01-25
 
 ### Added
