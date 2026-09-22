@@ -66,7 +66,7 @@ Feature requests are welcome! Please open an issue with:
 
 ### Prerequisites
 
-- Python 3.10 or higher
+- Python 3.11 or higher
 - Poetry for dependency management
 - Git
 

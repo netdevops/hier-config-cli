@@ -14,7 +14,6 @@ classifiers = [
     "Intended Audience :: System Administrators",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -26,10 +25,14 @@ packages = [{include = "hier_config_cli", from = "src"}]
 include = ["src/hier_config_cli/py.typed"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 hier-config = {version = ">=4.0.0b1,<5.0", allow-prereleases = true}
 click = "^8.1.7"
 pyyaml = "^6.0.2"
+# Pin pydantic high enough that pydantic-core ships a cp314 wheel; the
+# minimum (2.10.x / core 2.27.x) has none, so Python 3.14 builds it from
+# source and fails (PyO3 0.22 caps at 3.13).
+pydantic = ">=2.12,<3"
 
 [tool.poetry.group.dev.dependencies]
 flynt = "*"
@@ -105,7 +108,7 @@ warn_unreachable = true
 
 [tool.ruff]
 line-length = 88
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.format]
 docstring-code-format = true
